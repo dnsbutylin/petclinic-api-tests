@@ -9,6 +9,19 @@ import io.restassured.specification.RequestSpecification;
 
 import static io.restassured.RestAssured.given;
 
+/**
+ * HTTP-клиент owners CRUD.
+ *
+ * <p>Шпаргалка Python → Java:
+ * <ul>
+ *   <li>{@code clients/owners_client.py} → этот класс</li>
+ *   <li>{@code client.create(payload)} → {@link #createOwner(OwnerFields)}</li>
+ *   <li>path params {@code /owners/{id}} → {@code get("/api/owners/{ownerId}", ownerId)}</li>
+ * </ul>
+ *
+ * <p>Реальные статусы PetClinic REST (проверено по OwnerRestControllerV1):
+ * POST → 201, GET → 200/404, PUT → 204, DELETE → 204.
+ */
 public class OwnersClient {
 
     private final RequestSpecification requestSpec;
@@ -21,7 +34,7 @@ public class OwnersClient {
     public Response createOwner(OwnerFields owner) {
         return given()
                 .spec(requestSpec)
-                .body(owner)
+                .body(owner) // record → JSON
                 .when()
                 .post("/api/owners")
                 .then()

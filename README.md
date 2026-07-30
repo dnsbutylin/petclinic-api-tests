@@ -8,7 +8,7 @@
 | Что | Версия / инструмент |
 |-----|---------------------|
 | Java | 17+ (проверено на 22) |
-| Maven | 3.9+ |
+| Maven | 3.9+ (есть Maven Wrapper: `mvnw` / `mvnw.cmd`) |
 | Spring Boot | 3.3.5 |
 | JUnit 5 | (из Spring Boot) |
 | RestAssured | 5.5.0 |
@@ -38,7 +38,7 @@ docker run --rm -p 9966:9966 springcommunity/spring-petclinic-rest
 docker compose up -d
 ```
 
-> На Windows Docker Desktop проброс порта `9966` иногда «отваливается», если параллельно крутится много других контейнеров.
+> На Windows Docker Desktop проброс порта `9966` иногда «отваливается» (VPN / много контейнеров).
 > Если `curl http://127.0.0.1:9966/petclinic/actuator/health` не отвечает — перезапусти контейнер или используй вариант A.
 
 Проверки после запуска:
@@ -51,46 +51,61 @@ docker compose up -d
 
 Приложение PetClinic должно быть запущено локально.
 
-```bash
-mvn clean test
+Maven Wrapper (если глобального `mvn` нет) — Windows PowerShell:
+
+```powershell
+.\mvnw.cmd clean test
+.\mvnw.cmd clean test "-DbaseUrl=http://127.0.0.1:9966/petclinic"
 ```
 
-С переопределением base URL:
+Или глобальный Maven:
 
 ```bash
+mvn clean test
 mvn clean test -DbaseUrl=http://127.0.0.1:9966/petclinic
 ```
 
-> На Windows предпочтительно `127.0.0.1`, а не `localhost` (иначе возможны таймауты из‑за IPv6).
-
+> На Windows предпочтительно `127.0.0.1`, а не `localhost` (IPv6-таймауты).
 
 Отчёт Allure (опционально):
 
-```bash
-mvn allure:serve
+```powershell
+.\mvnw.cmd allure:serve
 ```
 
-## Что покрыто
+## Соответствие ТЗ
 
-1. **Health check** — `GET /actuator/health` → 200, `status=UP`
-2. **Owner CRUD** — create → get → update → delete → get(404)
-3. **Негативный create** — пустые обязательные поля → 400 + тело ошибки (`ProblemDetail` / `schemaValidationErrors`)
+| Требование | Статус |
+|------------|--------|
+| Отдельный тестовый проект (не внутри PetClinic) | да |
+| Java 17+, Spring Boot, JUnit 5, Maven, RestAssured, AssertJ | да |
+| Health: 200 + `status=UP` | да |
+| Owner CRUD: POST→GET→PUT→DELETE→GET | да |
+| Негативный create: status + тело ошибки | да |
+| README: запуск app / тестов / версии | да |
+| `-DbaseUrl=...` | да |
+| Плюс: Allure, request/response logging, docker-compose | да |
 
 ## Структура
 
 ```
 src/test/java/com/example/petclinic/
-  config/ApiTestBase.java      # RestAssured + baseUrl (аналог conftest.py)
+  config/ApiTestBase.java      # RestAssured + baseUrl (≈ conftest.py)
   client/HealthClient.java
   client/OwnersClient.java
   dto/                         # records ≈ Pydantic models
   tests/
 ```
 
-## Заметки по API PetClinic
+В коде есть комментарии-шпаргалки Python → Java.
+
+## Заметки по API PetClinic (SUT)
+
+По коду `OwnerRestControllerV1`:
 
 - `POST /api/owners` → **201**
-- `PUT /api/owners/{id}` → **204** (проверка данных через последующий GET)
+- `PUT /api/owners/{id}` → **204** (данные проверяем следующим GET)
 - `DELETE /api/owners/{id}` → **204**
 - После удаления `GET` → **404**
-- Ошибка валидации → **400** с `title`, `detail`, `schemaValidationErrors`
+- Ошибка валидации → **400** ProblemDetail (`title`, `detail`, `schemaValidationErrors`)
+- Security в образе по умолчанию выключена — отдельный логин для тестов не нужен

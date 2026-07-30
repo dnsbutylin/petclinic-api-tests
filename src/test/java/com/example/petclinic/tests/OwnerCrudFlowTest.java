@@ -14,6 +14,23 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * ТЗ п.2 CRUD-flow owner:
+ * POST → GET → PUT → DELETE → GET(после delete).
+ *
+ * <p>Ожидания из ТЗ:
+ * создался → доступен по id → после update данные изменены → после delete недоступен.
+ *
+ * <p>Шпаргалка Python → Java:
+ * <ul>
+ *   <li>один сценарий-flow в одном тесте (как один test_* с несколькими шагами)</li>
+ *   <li>{@code assert a == b} → AssertJ {@code assertThat(a).isEqualTo(b)}</li>
+ *   <li>payload dict/Pydantic → {@code new OwnerFields(...)}</li>
+ * </ul>
+ *
+ * <p>Важно по реальному PetClinic: PUT и DELETE отдают 204 No Content,
+ * поэтому «данные изменились» проверяем повторным GET, а не телом PUT.
+ */
 @Epic("PetClinic API")
 @Feature("Owners")
 @DisplayName("Owner CRUD flow")
@@ -35,9 +52,10 @@ class OwnerCrudFlowTest extends ApiTestBase {
                 "Petrov",
                 "Lenina 1",
                 "Moscow",
-                "1234567890"
+                "1234567890" // ровно 10 цифр — требование API
         );
 
+        // CREATE
         Response createResponse = ownersClient.createOwner(createPayload);
         assertThat(createResponse.statusCode()).isEqualTo(201);
 
@@ -51,6 +69,7 @@ class OwnerCrudFlowTest extends ApiTestBase {
 
         int ownerId = created.id();
 
+        // READ после create
         Response getAfterCreate = ownersClient.getOwner(ownerId);
         assertThat(getAfterCreate.statusCode()).isEqualTo(200);
         OwnerResponse fetched = ownersClient.asOwner(getAfterCreate);
@@ -58,6 +77,7 @@ class OwnerCrudFlowTest extends ApiTestBase {
         assertThat(fetched.firstName()).isEqualTo("Ivan");
         assertThat(fetched.lastName()).isEqualTo("Petrov");
 
+        // UPDATE
         OwnerFields updatePayload = new OwnerFields(
                 "Ivan",
                 "Sidorov",
@@ -66,7 +86,6 @@ class OwnerCrudFlowTest extends ApiTestBase {
                 "0987654321"
         );
         Response updateResponse = ownersClient.updateOwner(ownerId, updatePayload);
-        // PetClinic возвращает 204 No Content на PUT
         assertThat(updateResponse.statusCode()).isEqualTo(204);
 
         Response getAfterUpdate = ownersClient.getOwner(ownerId);
@@ -78,6 +97,7 @@ class OwnerCrudFlowTest extends ApiTestBase {
         assertThat(updated.city()).isEqualTo(updatePayload.city());
         assertThat(updated.telephone()).isEqualTo(updatePayload.telephone());
 
+        // DELETE + проверка, что больше недоступен
         Response deleteResponse = ownersClient.deleteOwner(ownerId);
         assertThat(deleteResponse.statusCode()).isEqualTo(204);
 

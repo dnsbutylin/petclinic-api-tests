@@ -14,6 +14,19 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * ТЗ п.3 Негативный create owner: невалидный payload (пустые обязательные поля)
+ * → ошибка валидации, проверить status и тело ошибки.
+ *
+ * <p>Шпаргалка Python → Java:
+ * <ul>
+ *   <li>негативный test_* → обычный {@code @Test}, просто другие ожидания</li>
+ *   <li>проверка error schema → DTO {@link ProblemDetailResponse} + AssertJ</li>
+ * </ul>
+ *
+ * <p>На стороне PetClinic пустые поля режутся Bean Validation / OpenAPI → 400 ProblemDetail
+ * с {@code schemaValidationErrors}.
+ */
 @Epic("PetClinic API")
 @Feature("Owners")
 @DisplayName("Owner negative create")

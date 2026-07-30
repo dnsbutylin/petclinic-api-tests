@@ -13,6 +13,17 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * ТЗ п.1 Health check: GET /actuator/health → 200 и status == UP.
+ *
+ * <p>Шпаргалка Python → Java:
+ * <ul>
+ *   <li>{@code def test_...( ):} → {@code @Test void ...()}</li>
+ *   <li>{@code assert response.status_code == 200} → {@code assertThat(...).isEqualTo(200)}</li>
+ *   <li>наследование fixture-базы → {@code extends ApiTestBase}</li>
+ *   <li>Allure epic/feature → {@code @Epic}/{@code @Feature}/{@code @Story}</li>
+ * </ul>
+ */
 @Epic("PetClinic API")
 @Feature("Health")
 @DisplayName("Health check")
@@ -22,6 +33,7 @@ class HealthCheckTest extends ApiTestBase {
 
     @BeforeEach
     void setUp() {
+        // как создание клиента в setup/fixture
         healthClient = new HealthClient(requestSpec);
     }
 
