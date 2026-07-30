@@ -1,0 +1,13 @@
+target/
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.allure/
+allure-results/
+allure-report/
+*.log
+petclinic-run.out
+petclinic-run.err
+.DS_Store
